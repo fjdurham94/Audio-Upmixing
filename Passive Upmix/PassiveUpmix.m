@@ -1,5 +1,5 @@
 function PassiveUpmix(inputFile)
-    outputFile = makeOutputFileName(inputFile,'5_1_mix')
+    outputFile = makeOutputFileName(inputFile,'5_1_mix');
     outputFile_2_1 = makeOutputFileName(inputFile,'2_1_mix');
     %Passive Upmix from 2 channel to 5.1 surround
 
@@ -19,8 +19,11 @@ function PassiveUpmix(inputFile)
 
     c=(inL+inR)/sqrt(2);
 
-    %Low pass for the sub (500Hz?)
-    s=c;
+    %Low pass for the sub at 120Hz ITU-R 775
+    fprintf('Filtering LFE above 120Hz\n');
+    lpfspec120Hz = fdesign.lowpass('Fp,Fst,Ap,Ast',120,250,0.1,50,Fs);
+    lpf120Hz = design(lpfspec120Hz, 'equiripple');
+    LFE=filter(lpf120Hz, c);
 
     %90phase shift on the rear pair
     fprintf('Applying phase shift to surround channel 1 of 2\n');
@@ -42,11 +45,11 @@ function PassiveUpmix(inputFile)
     rr = filter(lpf7kHz, rr);
 
     %bring together for a 6 channel output
-    upMix = [inL,inR,c,s,rl,rr];
+    upMix = [inL,inR,c,LFE,rl,rr];
     
     %version with L R and Sub for comparison
     z = zeros(size(inL));
-    mix2_1 = [inL,inR,z,s,z,z];
+    mix2_1 = [inL,inR,z,LFE,z,z];
 
     %dsp.AudioFileWriter to save as a 5.1 flac
     fprintf('Writing 5.1 mix to file [%s]\n' ,outputFile);
