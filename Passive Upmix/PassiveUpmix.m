@@ -32,6 +32,14 @@ function PassiveUpmix(inputFile)
     %rr=inR-inL;
     rr=(inR-inL)/sqrt(2); %3dB attenuation to maintain constant acoustic energy
     rr=imag(hilbert(rr));
+    
+    % LPF applied to surround channel to give the idea of the sound being
+    % further away. 7Khz taken from Dolby Pro Logic operation section 1.2
+    fprintf('Applying 7kHz LPF to surround channels\n');
+    lpfspec7kHz = fdesign.lowpass('Fp,Fst,Ap,Ast',7000,7500,0.1,50,Fs); % Generates LPF specification object
+    lpf7kHz = design(lpfspec7kHz, 'equiripple'); % Creates filter from specification obj
+    rl = filter(lpf7kHz, rl);
+    rr = filter(lpf7kHz, rr);
 
     %bring together for a 6 channel output
     upMix = [inL,inR,c,s,rl,rr];
