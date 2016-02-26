@@ -33,8 +33,9 @@ function PassiveUpmix(inputFile)
 
     fprintf('Applying phase shift to surround channel 2 of 2\n');
     %rr=inR-inL;
-    rr=(inR-inL)/sqrt(2); %3dB attenuation to maintain constant acoustic energy
-    rr=imag(hilbert(rr));
+    %rr=(inR-inL)/sqrt(2); %3dB attenuation to maintain constant acoustic energy
+    %rr=imag(hilbert(rr));
+    rr = -rl; % 180? phase shift of difference signal, same as 90 phase shift
     
     % LPF applied to surround channel to give the idea of the sound being
     % further away. 7Khz taken from Dolby Pro Logic operation section 1.2
