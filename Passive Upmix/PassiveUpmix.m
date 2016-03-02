@@ -17,40 +17,11 @@ function PassiveUpmix(inputFile)
     inL=input(:,1);
     inR=input(:,2);
 
-    c=(inL+inR)/sqrt(2);
-
-    %Low pass for the sub at 120Hz ITU-R 775
-    fprintf('Filtering LFE above 120Hz\n');
-    lpfspec120Hz = fdesign.lowpass('Fp,Fst,Ap,Ast',120,250,0.1,50,Fs);
-    lpf120Hz = design(lpfspec120Hz, 'equiripple');
-    LFE=filter(lpf120Hz, c);
-
-    %90phase shift on the rear pair
-    fprintf('Applying phase shift to surround channel 1 of 2\n');
-    %rl=inL-inR;
-    rl=(inL-inR)/sqrt(2); %3dB attenuation to maintain constant acoustic energy
-    rl=imag(hilbert(rl));%the imaginary part of a hilbert transform is a 90 degree phase shift of the original
-
-    fprintf('Applying phase shift to surround channel 2 of 2\n');
-    %rr=inR-inL;
-    %rr=(inR-inL)/sqrt(2); %3dB attenuation to maintain constant acoustic energy
-    %rr=imag(hilbert(rr));
-    rr = -rl; % 180? phase shift of difference signal, same as 90 phase shift
-    
-    % LPF applied to surround channel to give the idea of the sound being
-    % further away. 7Khz taken from Dolby Pro Logic operation section 1.2
-    fprintf('Applying 7kHz LPF to surround channels\n');
-    lpfspec7kHz = fdesign.lowpass('Fp,Fst,Ap,Ast',7000,7500,0.1,50,Fs); % Generates LPF specification object
-    lpf7kHz = design(lpfspec7kHz, 'equiripple'); % Creates filter from specification obj
-    rl = filter(lpf7kHz, rl);
-    rr = filter(lpf7kHz, rr);
-
-    %bring together for a 6 channel output
-    upMix = [inL,inR,c,LFE,rl,rr];
+    upMix = PassiveMatrix(inL, inR, Fs);
     
     %version with L R and Sub for comparison
     z = zeros(size(inL));
-    mix2_1 = [inL,inR,z,LFE,z,z];
+    mix2_1 = [inL, inR, z, upMix(:,4), z, z];
 
     %dsp.AudioFileWriter to save as a 5.1 flac
     fprintf('Writing 5.1 mix to file [%s]\n' ,outputFile);
