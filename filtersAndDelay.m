@@ -9,7 +9,7 @@ function audio = filtersAndDelay( audio, Fs )
     fprintf('Filtering LFE above 120Hz\n');
     lpfspec120Hz = fdesign.lowpass('Fp,Fst,Ap,Ast',120,250,0.1,50,Fs);
     lpf120Hz = design(lpfspec120Hz, 'equiripple');
-    audio=filter(lpf120Hz, audio(:,4));
+    audio(:,4)=filter(lpf120Hz, audio(:,4));
     
     % 90phase shift on the rear pair
     fprintf('Applying phase shift to surround channel\n');
