@@ -20,18 +20,7 @@ function PassiveUpmix(inputFile)
     upMix = PassiveMatrix(inL, inR, Fs);
     % upMix is a Lx6 matrix [left, right, centre, LFE, rearleft, rearright]
     
-    % 90phase shift on the rear pair
-    fprintf('Applying phase shift to surround channel\n');
-    upMix(:,5) = imag(hilbert(upMix(:,5))); % The imaginary part of a hilbert transform is a +90 degree phase shift of the original
-    upMix(:,6) = -upMix(:,5);
-    
-    % LPF applied to surround channel to give the idea of the sound being
-    % further away. 7Khz taken from Dolby Pro Logic operation section 1.2
-    fprintf('Applying 7kHz LPF to surround channels\n');
-    lpfspec7kHz = fdesign.lowpass('Fp,Fst,Ap,Ast',7000,7500,0.1,50,Fs); % Generates LPF specification object
-    lpf7kHz = design(lpfspec7kHz, 'equiripple'); % Creates filter from specification obj
-    upMix(:,5) = filter(lpf7kHz, upMix(:,5));
-    upMix(:,6) = filter(lpf7kHz, upMix(:,6));
+    upMix = filtersAndDelay(upMix, Fs);
     
     %version with L R and Sub for comparison
     z = zeros(size(inL));
