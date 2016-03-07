@@ -1,5 +1,5 @@
 function PassiveUpmix(inputFile)
-    outputFile = makeOutputFileName(inputFile,'5_1_mix');
+    outputFile = makeOutputFileName(inputFile,'psv_mix');
     outputFile_2_1 = makeOutputFileName(inputFile,'2_1_mix');
     %Passive Upmix from 2 channel to 5.1 surround
 
@@ -50,5 +50,5 @@ end
 function outputFile = makeOutputFileName(fileName,mix)
     dot_locs = strfind(fileName,'.');
     last_dot = dot_locs(end);
-    outputFile = [fileName(1:last_dot-1) mix '.flac'];
+    outputFile = [fileName(1:last_dot-1 '_' mix '.flac'];
 end
