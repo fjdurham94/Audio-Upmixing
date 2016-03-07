@@ -6,7 +6,7 @@ function audio = filtersAndDelay( audio, Fs )
 %   rear left.
 
     % Low pass for the LFE at 120Hz ITU-R 775
-    fprintf('Filtering LFE above 120Hz\n'); COMMENTED FOR SPEED
+    fprintf('Filtering LFE above 120Hz\n');
     lpfspec120Hz = fdesign.lowpass('Fp,Fst,Ap,Ast',120,250,0.1,50,Fs);
     lpf120Hz = design(lpfspec120Hz, 'equiripple');
     audio=filter(lpf120Hz, audio(:,4));
