@@ -1,11 +1,11 @@
-function output = PassiveMatrix(left, right, Fs)
+function output = PassiveMatrix(left, right)
     % Applies a passive matrix upmix to a two channel input with sampling
     % frequence Fs, output is returned in a Lx6 matrix where L is the
     % length of the input. 
     % Surround channel needs to be phase deleayed and
     % filtered at 7khz after this function to allow the active upmixer to
     % perform dominance detection.
-    fprintf('Applying passive matrix\n');
+    %fprintf('Applying passive matrix\n');
     
     c=(left+right)/sqrt(2);
 
