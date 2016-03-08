@@ -1,11 +1,11 @@
-%function ActiveUpmix(inputfile)
+function ActiveUpmix(inputFile)
     % This active surround sound upmixing method aims to improve on the
     % resultant output of the passive upmixing matrix
     close all;
     clear all;
-    inputfile = 'Passive Upmix/UTB_clip.flac';
+    inputFile = 'Passive Upmix/UTB_clip.flac';
     
-    [input, Fs] = audioread(inputfile);
+    [input, Fs] = audioread(inputFile);
     % Define a frame size
     F_SIZE = 882; %corresponds to a frame length of 20ms at 44100Hz Fs
     NFRAMES = floor(length(input)/F_SIZE);
@@ -22,7 +22,7 @@
 
         % Find the dominance vector
         
-        frame = log(abs(psv_Matrix)); % log of full wave rectified sample values
+        frame = log(abs(psv_matrix)); % log of full wave rectified sample values
         frame(frame(:,5) < -10, 5)  = -10; % Clip the surround values to avoid infinite dominance values
 
         Erl = [Erl; frame(:,2) - frame(:,1)];
@@ -37,7 +37,7 @@
         %scatter(frame(:,2) - frame(:,1), frame(:,3) - frame(:, 5), '.g');
         %hold on; 
         %scatter(mean(frame(:,2) - frame(:,1)), mean(frame(:,3) - frame(:, 5)), 'xr');
-        fprintf('Mean frame(%i) dominance: L->R: %f, S->C: %f\n', current_frame, mean(frame(:,2) - frame(:,1)), mean(frame(:,3) - frame(:, 5)));
+        %fprintf('Mean frame(%i) dominance: L->R: %f, S->C: %f\n', current_frame, mean(frame(:,2) - frame(:,1)), mean(frame(:,3) - frame(:, 5)));
     end
     close(bar);
         
@@ -66,7 +66,7 @@
     %ouput.
     input = input(1:size(Er,1), :); % Temporary fix, need to process last few samples which aren't a entire frame.
     psv_matrix = PassiveMatrix(input(:,1), input(:,2), Fs);
-    l = psv_matrix(:,1); r = psv_matrix(:,2);
+    l = input(:,1); r = input(:,2);
     c = psv_matrix(:,3); s = psv_matrix(:,5);
     
     Lo = l - Er.*r - Er.*l;
@@ -80,9 +80,28 @@
     
     % Finally apply the LFP to LFE and surround as well as surround channel
     % phase delay.
-    upMix = filtersAndDelay(upMix);
+    upMix = filtersAndDelay(upMix, Fs);
     
-    % Dominance bipolar control signal
-    %Elr = frame(:,1) - frame(:,2);
-    output = [Lo Ro c LFE s -s];
-%end
+    % 2.1 mix for reference with sub.
+    z = zeros(size(l));
+    mix2_1 = [l, r, z, upMix(:,4), z, z];
+    
+    outputFile = makeOutputFileName(inputFile,'act_mix');
+    outputFile_2_1 = makeOutputFileName(inputFile,'2_1_mix');
+    %dsp.AudioFileWriter to save as a 5.1 flac
+    fprintf('Writing 5.1 mix to file [%s]\n' ,outputFile);
+    FW = dsp.AudioFileWriter(outputFile, 'FileFormat', 'FLAC');
+    step(FW, upMix);
+    release(FW);
+    
+    fprintf('Writing 2.1 mix to file [%s]\n' ,outputFile_2_1);
+    FW = dsp.AudioFileWriter(outputFile_2_1, 'FileFormat', 'FLAC');
+    step(FW, mix2_1);
+    release(FW);
+end
+
+function outputFile = makeOutputFileName(fileName,mix)
+    dot_locs = strfind(fileName,'.');
+    last_dot = dot_locs(end);
+    outputFile = [fileName(1:last_dot-1) '_' mix '.flac'];
+end
