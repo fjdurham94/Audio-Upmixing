@@ -3,7 +3,7 @@ function ActiveUpmix(inputFile)
     % resultant output of the passive upmixing matrix
     close all;
     clear all;
-    inputFile = 'Passive Upmix/UTB_clip.flac';
+    inputFile = 'TestClips/UTB_clip.flac';
     
     [input, Fs] = audioread(inputFile);
     % Define a frame size
@@ -11,22 +11,31 @@ function ActiveUpmix(inputFile)
     NFRAMES = floor(length(input)/F_SIZE);
     
     Erl = []; Ecs = [];
+    start = 1;
     bar = waitbar(1/NFRAMES, 'Determining frame dominance...');
     % Apply passive matrix to each frame and detect dominant source
     for current_frame = 1:NFRAMES % floor will need to be changed to zero pad
     %for current_frame = 1:5
         waitbar(current_frame/NFRAMES, bar, 'Determining frame dominance...');
-        start = 1;
         frame = input(start + (current_frame-1) * F_SIZE : F_SIZE * current_frame, :);
-        psv_matrix = PassiveMatrix(frame(:,1), frame(:,2), Fs);
+        psv_matrix = PassiveMatrix(frame(:,1), frame(:,2));
 
         % Find the dominance vector
+        frame_log = log(abs(psv_matrix)); % log of full wave rectified sample values
         
-        frame = log(abs(psv_matrix)); % log of full wave rectified sample values
-        frame(frame(:,5) < -10, 5)  = -10; % Clip the surround values to avoid infinite dominance values
+        %Clip L R C and S channels to avoid infinite dominance values
+        frame_log(frame_log(:,1) < -10, 1)  = -10; % Left
+        frame_log(frame_log(:,1) > 10, 1) = 10;
+        frame_log(frame_log(:,2) < -10, 2)  = -10; % Right
+        frame_log(frame_log(:,2) > 10, 2) = 10;
+        
+        frame_log(frame_log(:,3) < -10, 3)  = -10; % Centre
+        frame_log(frame_log(:,3) > 10, 3) = 10;
+        frame_log(frame_log(:,5) < -10, 5)  = -10; % Surround
+        frame_log(frame_log(:,5) > 10, 5) = 10;
 
-        Erl = [Erl; frame(:,2) - frame(:,1)];
-        Ecs = [Ecs; frame(:,3) - frame(:,2)];
+        Erl = [Erl; frame_log(:,2) - frame_log(:,1)];
+        Ecs = [Ecs; frame_log(:,3) - frame_log(:,5)];
         
         %biplot(frame)
         %clf;
@@ -50,7 +59,7 @@ function ActiveUpmix(inputFile)
 
     % Normalise control signals Erl and Ecs
     Erl = Erl./max(abs(Erl));
-    Ecs = Ecs./max(abs(Erl));
+    Ecs = Ecs./max(abs(Ecs));
     
     % Split bipolar controal signals into 4 unipolar signals by setting
     % one polarity to zero.
@@ -65,7 +74,7 @@ function ActiveUpmix(inputFile)
     % Combine control signals with original L and R to create Active Upmix
     %ouput.
     input = input(1:size(Er,1), :); % Temporary fix, need to process last few samples which aren't a entire frame.
-    psv_matrix = PassiveMatrix(input(:,1), input(:,2), Fs);
+    psv_matrix = PassiveMatrix(input(:,1), input(:,2));
     l = input(:,1); r = input(:,2);
     c = psv_matrix(:,3); s = psv_matrix(:,5);
     
