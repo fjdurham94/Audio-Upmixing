@@ -17,7 +17,8 @@ function PassiveUpmix(inputFile)
     inL=input(:,1);
     inR=input(:,2);
 
-    upMix = PassiveMatrix(inL, inR, Fs);
+    fprintf('Aplying passive matrix\n');
+    upMix = PassiveMatrix(inL, inR);
     % upMix is a Lx6 matrix [left, right, centre, LFE, rearleft, rearright]
     
     upMix = filtersAndDelay(upMix, Fs);
@@ -50,5 +51,5 @@ end
 function outputFile = makeOutputFileName(fileName,mix)
     dot_locs = strfind(fileName,'.');
     last_dot = dot_locs(end);
-    outputFile = [fileName(1:last_dot-1 '_' mix '.flac'];
+    outputFile = [fileName(1:last_dot-1) '_' mix '.flac'];
 end
