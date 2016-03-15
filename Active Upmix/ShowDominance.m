@@ -8,15 +8,16 @@
     
     [input, Fs] = audioread(inputFile);
     % Define a frame size
-    F_SIZE = 882*20; %corresponds to a frame length of 20ms at 44100Hz Fs
+    F_SIZE = 882*10; %corresponds to a frame length of 20ms at 44100Hz Fs
     NFRAMES = floor(length(input)/F_SIZE);
     
     Erl = []; Ecs = [];
     start = 1;
-    bar = waitbar(1/NFRAMES, 'Determining frame dominance...');
+    fprintf('Designing band pass filter\n');
     % Apply passive matrix to each frame and detect dominant source
     bpfspec = fdesign.bandpass(100/Fs, 200/Fs, 1600/Fs, 2000/Fs, 50, 0.1, 50);
     bpf = design(bpfspec, 'equiripple');
+    bar = waitbar(1/NFRAMES, 'Determining frame dominance...');
     for current_frame = 1:NFRAMES % floor will need to be changed to zero pad
     %for current_frame = 1:5
         waitbar(current_frame/NFRAMES, bar, 'Determining frame dominance...');
